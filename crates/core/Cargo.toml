@@ -1,0 +1,8 @@
+[package]
+name = "rust-explorer-core"
+version = "0.1.0"
+edition = "2024"
+description = "Core functionality for rust-explorer"
+
+[dependencies]
+rust-explorer-utils = { path = "../utils" }

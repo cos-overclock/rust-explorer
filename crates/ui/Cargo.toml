@@ -1,0 +1,11 @@
+[package]
+name = "rust-explorer-ui"
+version = "0.1.0"
+edition = "2024"
+description = "User interface components for rust-explorer"
+
+[dependencies]
+floem = "0.2"
+rust-explorer-core = { path = "../core" }
+rust-explorer-config = { path = "../config" }
+rust-explorer-utils = { path = "../utils" }
