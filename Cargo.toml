@@ -3,5 +3,17 @@ name = "rust-explorer"
 version = "0.1.0"
 edition = "2024"
 
+[workspace]
+members = [
+    "crates/core",
+    "crates/config",
+    "crates/ui",
+    "crates/utils",
+]
+
 [dependencies]
 floem = "0.2"
+rust-explorer-core = { path = "crates/core" }
+rust-explorer-config = { path = "crates/config" }
+rust-explorer-ui = { path = "crates/ui" }
+rust-explorer-utils = { path = "crates/utils" }
