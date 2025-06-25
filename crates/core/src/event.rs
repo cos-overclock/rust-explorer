@@ -25,7 +25,7 @@ impl EventManager {
     pub fn new() -> Self {
         Self {}
     }
-    
+
     /// イベントを処理
     pub fn handle_event(&self, event: Event) -> Result<(), AppError> {
         match event {

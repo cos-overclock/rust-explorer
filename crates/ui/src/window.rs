@@ -19,12 +19,12 @@ impl MainWindow {
             height: settings.window_height(),
         })
     }
-    
+
     /// ウィンドウタイトルを取得
     pub fn title(&self) -> &str {
         &self.title
     }
-    
+
     /// ウィンドウサイズを取得
     pub fn size(&self) -> (u32, u32) {
         (self.width, self.height)
