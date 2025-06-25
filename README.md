@@ -84,4 +84,4 @@
 ## 7. 参考
 
 - UI参考：[files-community/Files](https://github.com/files-community/Files)
-- 技術参考：Rust GUIライブラリ [iced](https://github.com/iced-rs/iced)、検索エンジン（tantivy等）
+- 技術参考：Rust GUIライブラリ [floem](https://github.com/lapce/floem)、検索エンジン（tantivy等）
