@@ -1,9 +1,7 @@
 //! floem RwSignalを使ったUI状態統合
 
 use floem::reactive::{RwSignal, SignalGet, SignalUpdate};
-use rust_explorer_core::{
-    AppState, StateManager, TabState, UiState, WindowState,
-};
+use rust_explorer_core::{AppState, StateManager, TabState, UiState, WindowState};
 use rust_explorer_utils::AppError;
 
 /// UIとfloemの状態を結合するリアクティブラッパー

@@ -5,9 +5,11 @@ edition = "2024"
 description = "User interface components for rust-explorer"
 
 [dependencies]
+async-trait = "0.1"
+chrono = { version = "0.4", features = ["serde"] }
 floem = "0.2"
 rust-explorer-core = { path = "../core" }
 rust-explorer-config = { path = "../config" }
 rust-explorer-utils = { path = "../utils" }
-chrono = { version = "0.4", features = ["serde"] }
 serde = { version = "1.0", features = ["derive"] }
+tokio = { version = "1", features = ["full"] }
