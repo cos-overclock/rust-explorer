@@ -8,3 +8,8 @@ description = "Configuration management for rust-explorer"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 rust-explorer-utils = { path = "../utils" }
+chrono = { version = "0.4", features = ["serde"] }
+dirs = "5.0"
+
+[dev-dependencies]
+tempfile = "3.0"
