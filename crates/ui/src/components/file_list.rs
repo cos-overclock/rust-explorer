@@ -5,9 +5,8 @@ use floem::{
     reactive::{RwSignal, SignalGet, SignalUpdate},
     views::{Decorators, dyn_stack, scroll},
 };
-use rust_explorer_core::{FileEntry, FileSystemApi, FileSystemManager};
+use rust_explorer_core::FileEntry;
 use std::path::PathBuf;
-use std::sync::Arc;
 
 use super::file_item::file_item_component;
 
@@ -86,34 +85,27 @@ pub struct FileListView {
     selected_indices: RwSignal<Vec<usize>>,
     current_path: RwSignal<PathBuf>,
     config: FileListConfig,
-    file_system: Arc<dyn FileSystemApi + Send + Sync>,
 }
 
 impl FileListView {
     /// 新しいファイルリストビューを作成
-    pub fn new(
-        initial_path: PathBuf,
-        config: FileListConfig,
-        file_system: Arc<dyn FileSystemApi + Send + Sync>,
-    ) -> Self {
+    pub fn new(initial_path: PathBuf, config: FileListConfig) -> Self {
         let view = Self {
             entries: RwSignal::new(Vec::new()),
             selected_indices: RwSignal::new(Vec::new()),
             current_path: RwSignal::new(initial_path.clone()),
             config,
-            file_system,
         };
 
         // 初期ディレクトリを読み込み
-        view.load_directory_async(initial_path);
+        view.load_directory_sync(initial_path);
 
         view
     }
 
     /// デフォルト設定でファイルリストビューを作成
     pub fn with_default(initial_path: PathBuf) -> Self {
-        let file_system = Arc::new(FileSystemManager::new());
-        Self::new(initial_path, FileListConfig::default(), file_system)
+        Self::new(initial_path, FileListConfig::default())
     }
 
     /// 現在のパスを取得
@@ -137,7 +129,7 @@ impl FileListView {
     pub fn change_directory(&self, path: PathBuf) {
         self.current_path.set(path.clone());
         self.selected_indices.set(Vec::new());
-        self.load_directory_async(path);
+        self.load_directory_sync(path);
     }
 
     /// 選択をクリア
@@ -170,7 +162,7 @@ impl FileListView {
     /// 表示を更新
     pub fn refresh(&self) {
         let current_path = self.current_path.get();
-        self.load_directory_async(current_path);
+        self.load_directory_sync(current_path);
     }
 
     /// ファイルリストビューを作成
@@ -178,51 +170,74 @@ impl FileListView {
         file_list_view(self.entries, self.selected_indices)
     }
 
-    /// ディレクトリを非同期で読み込み
-    fn load_directory_async(&self, path: PathBuf) {
-        let entries = self.entries;
-        let file_system = Arc::clone(&self.file_system);
-        let show_hidden = self.config.show_hidden;
+    /// ディレクトリを同期的に読み込み
+    fn load_directory_sync(&self, path: PathBuf) {
+        use std::fs;
 
-        // 非同期でディレクトリを読み込み
-        tokio::spawn(async move {
-            match file_system.list_directory(&path).await {
-                Ok(mut file_entries) => {
-                    // 隠しファイルのフィルタリング
-                    if !show_hidden {
-                        file_entries.retain(|entry| !entry.name.starts_with('.'));
+        let entries = match fs::read_dir(&path) {
+            Ok(entries) => {
+                let mut file_entries = Vec::new();
+
+                for entry in entries.flatten() {
+                    let entry_path = entry.path();
+                    let metadata = entry.metadata().ok();
+
+                    let file_type = if entry_path.is_dir() {
+                        rust_explorer_core::FileType::Directory
+                    } else if entry_path.is_symlink() {
+                        rust_explorer_core::FileType::SymLink
+                    } else if entry_path.is_file() {
+                        rust_explorer_core::FileType::File
+                    } else {
+                        rust_explorer_core::FileType::Other
+                    };
+
+                    let size = metadata.as_ref().map(|m| m.len()).unwrap_or(0);
+                    let modified = metadata.and_then(|m| m.modified().ok());
+
+                    let file_entry = FileEntry {
+                        name: entry.file_name().to_string_lossy().to_string(),
+                        path: entry_path,
+                        file_type,
+                        size,
+                        modified,
+                    };
+
+                    file_entries.push(file_entry);
+                }
+
+                // 隠しファイルのフィルタリング
+                if !self.config.show_hidden {
+                    file_entries.retain(|entry| !entry.name.starts_with('.'));
+                }
+
+                // 名前順でソート（フォルダを先に）
+                file_entries.sort_by(|a, b| {
+                    use rust_explorer_core::FileType;
+                    match (&a.file_type, &b.file_type) {
+                        (FileType::Directory, FileType::Directory)
+                        | (FileType::File, FileType::File) => a.name.cmp(&b.name),
+                        (FileType::Directory, _) => std::cmp::Ordering::Less,
+                        (_, FileType::Directory) => std::cmp::Ordering::Greater,
+                        _ => a.name.cmp(&b.name),
                     }
+                });
 
-                    // 名前順でソート（フォルダを先に）
-                    file_entries.sort_by(|a, b| {
-                        use rust_explorer_core::FileType;
-                        match (&a.file_type, &b.file_type) {
-                            (FileType::Directory, FileType::Directory)
-                            | (FileType::File, FileType::File) => a.name.cmp(&b.name),
-                            (FileType::Directory, _) => std::cmp::Ordering::Less,
-                            (_, FileType::Directory) => std::cmp::Ordering::Greater,
-                            _ => a.name.cmp(&b.name),
-                        }
-                    });
-
-                    entries.set(file_entries);
-                }
-                Err(e) => {
-                    eprintln!("ディレクトリの読み込みに失敗しました: {}", e);
-                    entries.set(Vec::new());
-                }
+                file_entries
             }
-        });
+            Err(e) => {
+                eprintln!("ディレクトリの読み込みに失敗しました: {}", e);
+                Vec::new()
+            }
+        };
+
+        self.entries.set(entries);
     }
 }
 
 /// ファイルリストビューコンポーネントを作成（便利関数）
-pub fn file_list_view_component(
-    initial_path: PathBuf,
-    config: FileListConfig,
-    file_system: Arc<dyn FileSystemApi + Send + Sync>,
-) -> FileListView {
-    FileListView::new(initial_path, config, file_system)
+pub fn file_list_view_component(initial_path: PathBuf, config: FileListConfig) -> FileListView {
+    FileListView::new(initial_path, config)
 }
 
 /// デフォルト設定でファイルリストビューを作成（便利関数）
@@ -236,55 +251,9 @@ mod tests {
     use rust_explorer_core::{FileEntry, FileType};
     use std::time::SystemTime;
 
-    // モックファイルシステム
-    struct MockFileSystem {
-        entries: Vec<FileEntry>,
-    }
-
-    #[async_trait::async_trait]
-    impl FileSystemApi for MockFileSystem {
-        async fn list_directory(
-            &self,
-            _path: &std::path::Path,
-        ) -> Result<Vec<FileEntry>, rust_explorer_utils::AppError> {
-            Ok(self.entries.clone())
-        }
-
-        async fn get_file_info(
-            &self,
-            _path: &std::path::Path,
-        ) -> Result<rust_explorer_core::FileInfo, rust_explorer_utils::AppError> {
-            unimplemented!()
-        }
-
-        fn is_accessible(&self, _path: &std::path::Path) -> bool {
-            true
-        }
-    }
-
-    #[tokio::test]
-    async fn test_file_list_view_creation() {
-        let mock_fs = Arc::new(MockFileSystem {
-            entries: vec![
-                FileEntry {
-                    name: "folder1".to_string(),
-                    path: PathBuf::from("/test/folder1"),
-                    file_type: FileType::Directory,
-                    size: 0,
-                    modified: Some(SystemTime::now()),
-                },
-                FileEntry {
-                    name: "file1.txt".to_string(),
-                    path: PathBuf::from("/test/file1.txt"),
-                    file_type: FileType::File,
-                    size: 1024,
-                    modified: Some(SystemTime::now()),
-                },
-            ],
-        });
-
-        let view = FileListView::new(PathBuf::from("/test"), FileListConfig::default(), mock_fs);
-
+    #[test]
+    fn test_file_list_view_creation() {
+        let view = FileListView::new(PathBuf::from("/test"), FileListConfig::default());
         assert_eq!(view.current_path(), PathBuf::from("/test"));
     }
 
@@ -296,28 +265,9 @@ mod tests {
         assert!(config.height.is_none());
     }
 
-    #[tokio::test]
-    async fn test_selection_operations() {
-        let mock_fs = Arc::new(MockFileSystem {
-            entries: vec![
-                FileEntry {
-                    name: "file1.txt".to_string(),
-                    path: PathBuf::from("/test/file1.txt"),
-                    file_type: FileType::File,
-                    size: 1024,
-                    modified: Some(SystemTime::now()),
-                },
-                FileEntry {
-                    name: "file2.txt".to_string(),
-                    path: PathBuf::from("/test/file2.txt"),
-                    file_type: FileType::File,
-                    size: 2048,
-                    modified: Some(SystemTime::now()),
-                },
-            ],
-        });
-
-        let view = FileListView::new(PathBuf::from("/test"), FileListConfig::default(), mock_fs);
+    #[test]
+    fn test_selection_operations() {
+        let view = FileListView::new(PathBuf::from("/test"), FileListConfig::default());
 
         // 初期状態では何も選択されていない
         assert!(view.selected_entries().is_empty());

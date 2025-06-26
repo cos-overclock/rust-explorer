@@ -12,4 +12,3 @@ rust-explorer-core = { path = "../core" }
 rust-explorer-config = { path = "../config" }
 rust-explorer-utils = { path = "../utils" }
 serde = { version = "1.0", features = ["derive"] }
-tokio = { version = "1", features = ["full"] }
