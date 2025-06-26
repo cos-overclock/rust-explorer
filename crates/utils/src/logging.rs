@@ -5,7 +5,7 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
-use tracing::{info, warn, Level};
+use tracing::{Level, info, warn};
 use tracing_appender::rolling::{RollingFileAppender, Rotation};
 use tracing_subscriber::EnvFilter;
 
@@ -206,7 +206,7 @@ impl PerformanceTimer {
     pub fn start(operation_name: impl Into<String>) -> Self {
         let operation_name = operation_name.into();
         info!(operation = %operation_name, "Starting operation");
-        
+
         Self {
             start_time: std::time::Instant::now(),
             operation_name,

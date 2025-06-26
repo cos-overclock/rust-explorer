@@ -7,5 +7,10 @@
 pub mod event;
 pub mod filesystem;
 
+#[cfg(test)]
+mod tests;
+
 pub use event::{Event, EventManager};
-pub use filesystem::FileSystemManager;
+pub use filesystem::{
+    CachedFileSystemManager, FileEntry, FileInfo, FileSystemApi, FileSystemManager, FileType,
+};

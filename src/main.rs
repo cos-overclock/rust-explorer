@@ -2,11 +2,11 @@
 
 use rust_explorer_ui::App;
 use rust_explorer_utils::{
-    AppResult, LogConfig, LogLevel, LogOutput, LogRotation, PanicHandlerConfig, PostPanicAction, 
-    init_logging, init_panic_handler, PerformanceTimer,
+    AppResult, LogConfig, LogLevel, LogOutput, LogRotation, PanicHandlerConfig, PerformanceTimer,
+    PostPanicAction, init_logging, init_panic_handler,
 };
 use std::path::PathBuf;
-use tracing::{info, error};
+use tracing::{error, info};
 
 fn main() -> AppResult<()> {
     // ログシステムの初期化
