@@ -1,0 +1,26 @@
+{
+  "timestamp": "2025-06-26T04:49:01.537890400Z",
+  "message": "there is no reactor running, must be called from the context of a Tokio 1.x runtime",
+  "location": {
+    "file": "crates\\ui\\src\\components\\main_content.rs",
+    "line": 199,
+    "column": 5
+  },
+  "backtrace": null,
+  "thread_info": {
+    "name": "main",
+    "id": "ThreadId(1)",
+    "is_main": true
+  },
+  "app_info": {
+    "name": "rust-explorer-utils",
+    "version": "0.1.0",
+    "start_time": "2025-06-26T04:49:01.479178600Z",
+    "uptime_seconds": 0
+  },
+  "system_info": {
+    "os": "windows",
+    "arch": "x86_64",
+    "rust_version": "rustc --version"
+  }
+}

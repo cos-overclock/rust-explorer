@@ -3,6 +3,8 @@
 //! 再利用可能なUIコンポーネントを含みます。
 
 pub mod error_dialog;
+pub mod file_item;
+pub mod file_list;
 pub mod header;
 pub mod main_content;
 pub mod status_bar;
@@ -10,12 +12,16 @@ pub mod status_bar;
 // 将来のコンポーネント用のモジュール宣言
 // pub mod tabs;
 // pub mod pane;
-// pub mod file_list;
 
 // 公開API
 pub use error_dialog::{
     ErrorAction, ErrorActionType, ErrorDisplayInfo, ErrorDisplayManager, display_error_globally,
     error_dialog_component, error_display_area, global_error_manager,
+};
+pub use file_item::{file_item_component, file_item_view};
+pub use file_list::{
+    FileListConfig, FileListState, FileListView, default_file_list_view, file_list_view,
+    file_list_view_component,
 };
 pub use header::{HeaderConfig, default_header, header_component};
 pub use main_content::{

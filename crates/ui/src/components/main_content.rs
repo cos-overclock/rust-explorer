@@ -7,7 +7,11 @@ use floem::reactive::RwSignal;
 use floem::text::Weight;
 use rust_explorer_config::Settings;
 use std::cell::RefCell;
+use std::env;
+use std::path::PathBuf;
 use std::rc::Rc;
+
+use super::file_list_view;
 
 /// メインコンテンツコンポーネントの設定
 pub struct MainContentConfig {
@@ -32,7 +36,7 @@ impl Default for MainContentConfig {
         Self {
             background_color: Color::rgb8(250, 250, 250),
             padding: 20.0,
-            content_type: ContentType::Welcome,
+            content_type: ContentType::FileExplorer,
         }
     }
 }
@@ -143,18 +147,112 @@ fn create_feature_item(title: &'static str, description: &'static str) -> impl I
     .style(|s| s.items_start())
 }
 
-/// ファイルエクスプローラーコンテンツの作成（将来の実装用）
+/// ファイルエクスプローラーコンテンツの作成
 fn create_file_explorer_content(_settings: Rc<RefCell<Settings>>) -> impl IntoView {
+    // 現在のディレクトリを取得（フォールバックは/home）
+    let current_dir = env::current_dir().unwrap_or_else(|_| {
+        env::var("HOME")
+            .map(PathBuf::from)
+            .unwrap_or_else(|_| PathBuf::from("/"))
+    });
+
+    let current_dir_for_display = current_dir.clone();
+    let current_dir_for_list = current_dir;
+
     v_stack((
-        label(|| "ファイルエクスプローラー").style(|s| {
-            s.font_size(20.0)
-                .font_weight(Weight::BOLD)
-                .margin_bottom(20.0)
-        }),
-        label(|| "ファイルエクスプローラー機能は将来のバージョンで実装予定です")
-            .style(|s| s.font_size(14.0)),
+        // パス表示エリア
+        h_stack((
+            label(|| "現在のパス:").style(|s| {
+                s.font_size(14.0)
+                    .font_weight(Weight::BOLD)
+                    .margin_right(10.0)
+                    .color(Color::rgb8(50, 50, 50))
+            }),
+            label(move || current_dir_for_display.display().to_string())
+                .style(|s| s.font_size(14.0).color(Color::rgb8(100, 100, 100))),
+        ))
+        .style(|s| s.padding(10.0).margin_bottom(10.0)),
+        // ファイルリストエリア
+        create_file_list_container(current_dir_for_list),
     ))
-    .style(|s| s.items_center().justify_center())
+    .style(|s| s.size_full().gap(5.0))
+}
+
+/// ファイルリストコンテナの作成
+fn create_file_list_container(current_dir: PathBuf) -> impl IntoView {
+    // RwSignal を直接使用してファイルリストを作成
+    use floem::reactive::RwSignal;
+    use rust_explorer_core::FileEntry;
+
+    let entries = RwSignal::new(Vec::<FileEntry>::new());
+    let selected_indices = RwSignal::new(Vec::<usize>::new());
+
+    // 同期的にファイル読み込み（floemアプリケーションではtokioランタイムが利用できないため）
+    let file_entries = load_directory_sync(&current_dir);
+    entries.set(file_entries);
+
+    container(file_list_view(entries, selected_indices)).style(|s| {
+        s.size_full()
+            .border(1.0)
+            .border_color(Color::rgb8(200, 200, 200))
+            .border_radius(8.0)
+            .background(Color::rgb8(255, 255, 255))
+    })
+}
+
+/// 同期的にディレクトリを読み込み
+fn load_directory_sync(path: &PathBuf) -> Vec<rust_explorer_core::FileEntry> {
+    use rust_explorer_core::{FileEntry, FileType};
+    use std::fs;
+
+    match fs::read_dir(path) {
+        Ok(entries) => {
+            let mut file_entries = Vec::new();
+
+            for entry in entries.flatten() {
+                let entry_path = entry.path();
+                let metadata = entry.metadata().ok();
+
+                let file_type = if entry_path.is_dir() {
+                    FileType::Directory
+                } else if entry_path.is_symlink() {
+                    FileType::SymLink
+                } else if entry_path.is_file() {
+                    FileType::File
+                } else {
+                    FileType::Other
+                };
+
+                let size = metadata.as_ref().map(|m| m.len()).unwrap_or(0);
+                let modified = metadata.and_then(|m| m.modified().ok());
+
+                let file_entry = FileEntry {
+                    name: entry.file_name().to_string_lossy().to_string(),
+                    path: entry_path,
+                    file_type,
+                    size,
+                    modified,
+                };
+
+                file_entries.push(file_entry);
+            }
+
+            // フォルダを先にソート
+            file_entries.sort_by(|a, b| {
+                use rust_explorer_core::FileType;
+                match (&a.file_type, &b.file_type) {
+                    (FileType::Directory, FileType::Directory)
+                    | (FileType::File, FileType::File) => a.name.cmp(&b.name),
+                    (FileType::Directory, _) => std::cmp::Ordering::Less,
+                    (_, FileType::Directory) => std::cmp::Ordering::Greater,
+                    _ => a.name.cmp(&b.name),
+                }
+            });
+
+            file_entries
+        }
+        Err(_) => Vec::new(),
+    }
 }
 
 /// エラーコンテンツの作成
@@ -181,7 +279,7 @@ mod tests {
     fn test_main_content_config_default() {
         let config = MainContentConfig::default();
         assert_eq!(config.padding, 20.0);
-        matches!(config.content_type, ContentType::Welcome);
+        matches!(config.content_type, ContentType::FileExplorer);
     }
 
     #[test]
