@@ -2,8 +2,21 @@
 //!
 //! 再利用可能なUIコンポーネントを含みます。
 
+pub mod header;
+pub mod main_content;
+pub mod status_bar;
+
 // 将来のコンポーネント用のモジュール宣言
 // pub mod tabs;
 // pub mod pane;
 // pub mod file_list;
-// pub mod status_bar;
+
+// 公開API
+pub use header::{HeaderConfig, default_header, header_component};
+pub use main_content::{
+    ContentType, MainContentConfig, default_main_content, main_content_component,
+};
+pub use status_bar::{
+    StatusBarConfig, StatusInfo, StatusType, add_status_item, create_status_info,
+    default_status_bar, file_explorer_status_bar, status_bar_component,
+};
