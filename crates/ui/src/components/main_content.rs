@@ -11,7 +11,7 @@ use std::env;
 use std::path::PathBuf;
 use std::rc::Rc;
 
-use super::file_list_view;
+use super::{breadcrumb_view, file_list_view};
 
 /// メインコンテンツコンポーネントの設定
 pub struct MainContentConfig {
@@ -149,6 +149,8 @@ fn create_feature_item(title: &'static str, description: &'static str) -> impl I
 
 /// ファイルエクスプローラーコンテンツの作成
 fn create_file_explorer_content(_settings: Rc<RefCell<Settings>>) -> impl IntoView {
+    use floem::reactive::RwSignal;
+
     // 現在のディレクトリを取得（フォールバックは/home）
     let current_dir = env::current_dir().unwrap_or_else(|_| {
         env::var("HOME")
@@ -156,24 +158,14 @@ fn create_file_explorer_content(_settings: Rc<RefCell<Settings>>) -> impl IntoVi
             .unwrap_or_else(|_| PathBuf::from("/"))
     });
 
-    let current_dir_for_display = current_dir.clone();
-    let current_dir_for_list = current_dir;
+    // リアクティブな現在のパス
+    let current_path = RwSignal::new(current_dir.clone());
 
     v_stack((
-        // パス表示エリア
-        h_stack((
-            label(|| "現在のパス:").style(|s| {
-                s.font_size(14.0)
-                    .font_weight(Weight::BOLD)
-                    .margin_right(10.0)
-                    .color(Color::rgb8(50, 50, 50))
-            }),
-            label(move || current_dir_for_display.display().to_string())
-                .style(|s| s.font_size(14.0).color(Color::rgb8(100, 100, 100))),
-        ))
-        .style(|s| s.padding(10.0).margin_bottom(10.0)),
+        // パンくずナビゲーション
+        breadcrumb_view(current_path).style(|s| s.margin_bottom(10.0)),
         // ファイルリストエリア
-        create_file_list_container(current_dir_for_list),
+        create_file_list_container(current_dir),
     ))
     .style(|s| s.size_full().gap(5.0))
 }

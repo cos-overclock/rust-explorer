@@ -2,6 +2,7 @@
 //!
 //! 再利用可能なUIコンポーネントを含みます。
 
+pub mod breadcrumb;
 pub mod error_dialog;
 pub mod file_item;
 pub mod file_list;
@@ -14,6 +15,10 @@ pub mod status_bar;
 // pub mod pane;
 
 // 公開API
+pub use breadcrumb::{
+    BreadcrumbConfig, BreadcrumbItem, BreadcrumbNavigation, breadcrumb_navigation, breadcrumb_view,
+    default_breadcrumb_navigation,
+};
 pub use error_dialog::{
     ErrorAction, ErrorActionType, ErrorDisplayInfo, ErrorDisplayManager, display_error_globally,
     error_dialog_component, error_display_area, global_error_manager,
