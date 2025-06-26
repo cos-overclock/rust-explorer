@@ -2,6 +2,8 @@
 //!
 //! このクレートは、Rust + floemを使用して開発されたタブ型ファイラーアプリケーションです。
 
+#![allow(clippy::result_large_err)]
+
 // 再利用可能なクレートを再エクスポート
 pub use rust_explorer_config::Settings;
 pub use rust_explorer_core::{Event, EventManager, FileSystemManager};

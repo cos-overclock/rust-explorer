@@ -56,8 +56,7 @@ pub fn default_header() -> impl IntoView {
 
 /// ツールバーエリアの作成（将来の拡張用）
 fn create_toolbar_area() -> impl IntoView {
-    container("")
-        .style(|s| s.margin_right(10.0))
+    container("").style(|s| s.margin_right(10.0))
 }
 
 #[cfg(test)]

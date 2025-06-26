@@ -48,7 +48,7 @@ pub type StatusInfo = HashMap<StatusType, String>;
 pub fn status_bar_component(config: StatusBarConfig, status_info: StatusInfo) -> impl IntoView {
     let text_color = config.text_color;
     let show_version = config.show_version;
-    
+
     h_stack((
         // 左側エリア
         create_left_area(status_info.clone(), text_color),
@@ -72,7 +72,7 @@ pub fn status_bar_component(config: StatusBarConfig, status_info: StatusInfo) ->
 pub fn default_status_bar() -> impl IntoView {
     let mut status_info = StatusInfo::new();
     status_info.insert(StatusType::Main, "準備完了".to_string());
-    
+
     status_bar_component(StatusBarConfig::default(), status_info)
 }
 
@@ -85,11 +85,11 @@ pub fn file_explorer_status_bar(
     let mut status_info = StatusInfo::new();
     status_info.insert(StatusType::Main, format!("パス: {}", current_path));
     status_info.insert(StatusType::FileInfo, format!("ファイル数: {}", file_count));
-    
+
     if selected_count > 0 {
         status_info.insert(StatusType::Selection, format!("選択中: {}", selected_count));
     }
-    
+
     status_bar_component(StatusBarConfig::default(), status_info)
 }
 
@@ -99,7 +99,7 @@ fn create_left_area(status_info: StatusInfo, text_color: Color) -> impl IntoView
         .get(&StatusType::Main)
         .cloned()
         .unwrap_or_else(|| "準備完了".to_string());
-    
+
     let file_info = status_info.get(&StatusType::FileInfo).cloned();
     let selection = status_info.get(&StatusType::Selection).cloned();
 
@@ -126,21 +126,21 @@ fn create_right_area(
     show_version: bool,
 ) -> impl IntoView {
     let version = if show_version {
-        Some(status_info
-            .get(&StatusType::Version)
-            .cloned()
-            .unwrap_or_else(|| format!("rust-explorer v{}", env!("CARGO_PKG_VERSION"))))
+        Some(
+            status_info
+                .get(&StatusType::Version)
+                .cloned()
+                .unwrap_or_else(|| format!("rust-explorer v{}", env!("CARGO_PKG_VERSION"))),
+        )
     } else {
         None
     };
 
-    h_stack((
-        if let Some(version_text) = version {
-            create_status_label(version_text, text_color).into_any()
-        } else {
-            container("").into_any()
-        },
-    ))
+    h_stack((if let Some(version_text) = version {
+        create_status_label(version_text, text_color).into_any()
+    } else {
+        container("").into_any()
+    },))
     .style(|s| s.items_center())
 }
 
@@ -182,7 +182,7 @@ mod tests {
     fn test_status_info_creation() {
         let mut status_info = create_status_info();
         add_status_item(&mut status_info, StatusType::Main, "テスト".to_string());
-        
+
         assert_eq!(
             status_info.get(&StatusType::Main),
             Some(&"テスト".to_string())
