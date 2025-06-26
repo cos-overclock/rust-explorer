@@ -100,20 +100,11 @@ impl FileSystemApi for FileSystemManager {
         }
 
         let mut entries = Vec::new();
-        let mut dir = fs::read_dir(path)
-            .await
-            .map_err(AppError::FileSystem)?;
+        let mut dir = fs::read_dir(path).await.map_err(AppError::FileSystem)?;
 
-        while let Some(entry) = dir
-            .next_entry()
-            .await
-            .map_err(AppError::FileSystem)?
-        {
+        while let Some(entry) = dir.next_entry().await.map_err(AppError::FileSystem)? {
             let path = entry.path();
-            let metadata = entry
-                .metadata()
-                .await
-                .map_err(AppError::FileSystem)?;
+            let metadata = entry.metadata().await.map_err(AppError::FileSystem)?;
 
             let file_type = if metadata.is_dir() {
                 FileType::Directory
@@ -147,9 +138,7 @@ impl FileSystemApi for FileSystemManager {
             return Err(AppError::InvalidPath(path.to_path_buf()));
         }
 
-        let metadata = fs::metadata(path)
-            .await
-            .map_err(AppError::FileSystem)?;
+        let metadata = fs::metadata(path).await.map_err(AppError::FileSystem)?;
 
         let file_type = if metadata.is_dir() {
             FileType::Directory
