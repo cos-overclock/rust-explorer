@@ -7,6 +7,7 @@ description = "User interface components for rust-explorer"
 [dependencies]
 async-trait = "0.1"
 chrono = { version = "0.4", features = ["serde"] }
+dirs = "5.0"
 floem = "0.2"
 rust-explorer-core = { path = "../core" }
 rust-explorer-config = { path = "../config" }
