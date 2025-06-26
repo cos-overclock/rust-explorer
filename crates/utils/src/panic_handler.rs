@@ -4,7 +4,9 @@
 
 #![allow(clippy::result_large_err)]
 
-use crate::error::{AppError, AppResultExt, ErrorCategory, ErrorMetadata, ErrorSeverity, error_utils};
+use crate::error::{
+    AppError, AppResultExt, ErrorCategory, ErrorMetadata, ErrorSeverity, error_utils,
+};
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use std::backtrace::{Backtrace, BacktraceStatus};
