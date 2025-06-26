@@ -20,11 +20,10 @@
 //! - floem-winit直接使用による高度な制御
 //! - カスタムウィンドウマネージャーの実装
 
+use crate::components::{default_header, default_main_content, default_status_bar};
 use floem::event::{Event, EventListener};
 use floem::kurbo::Size;
 use floem::prelude::*;
-use floem::reactive::RwSignal;
-use floem::text::Weight;
 use floem::window::WindowConfig;
 use rust_explorer_config::Settings;
 use rust_explorer_utils::AppError;
@@ -112,11 +111,11 @@ fn main_window_view(settings: Rc<RefCell<Settings>>) -> impl IntoView {
 
     v_stack((
         // ヘッダー部分
-        create_header(),
+        default_header(),
         // メインコンテンツ部分
-        create_main_content(settings_clone),
+        default_main_content(settings_clone),
         // ステータスバー部分
-        create_status_bar(),
+        default_status_bar(),
     ))
     .style(|s| s.size_full().flex_col())
     .on_event_stop(EventListener::WindowResized, move |event| {
@@ -153,86 +152,10 @@ fn handle_window_resize(settings: &Rc<RefCell<Settings>>, new_size: Size) {
     );
 }
 
-/// ヘッダー部分の作成
-fn create_header() -> impl IntoView {
-    h_stack((
-        label(|| "rust-explorer").style(|s| {
-            s.font_size(18.0)
-                .font_weight(Weight::BOLD)
-                .margin_left(10.0)
-        }),
-        // 将来的にはメニューやツールバーボタンを追加
-    ))
-    .style(|s| {
-        s.width_full()
-            .height(40.0)
-            .background(Color::rgb8(240, 240, 240))
-            .border_bottom(1.0)
-            .border_color(Color::rgb8(200, 200, 200))
-            .items_center()
-    })
-}
-
-/// メインコンテンツ部分の作成
-fn create_main_content(_settings: Rc<RefCell<Settings>>) -> impl IntoView {
-    let mut counter = RwSignal::new(0);
-
-    container(
-        v_stack((
-            label(|| "rust-explorer - Main Window").style(|s| {
-                s.font_size(24.0)
-                    .font_weight(Weight::BOLD)
-                    .margin_bottom(20.0)
-            }),
-            label(|| "メインウィンドウとアプリケーションライフサイクルが実装されました")
-                .style(|s| s.font_size(16.0).margin_bottom(30.0)),
-            h_stack((
-                button("カウント +")
-                    .action(move || counter += 1)
-                    .style(|s| s.margin_right(10.0)),
-                label(move || format!("カウント: {}", counter.get()))
-                    .style(|s| s.font_size(16.0).margin_right(10.0)),
-                button("カウント -").action(move || counter -= 1),
-            ))
-            .style(|s| s.gap(10.0)),
-            label(|| "機能:").style(|s| {
-                s.font_size(14.0)
-                    .font_weight(Weight::BOLD)
-                    .margin_top(30.0)
-                    .margin_bottom(10.0)
-            }),
-            v_stack((
-                label(|| "✓ ウィンドウサイズ・位置の管理"),
-                label(|| "! 最小ウィンドウサイズ制限（800x600） - floem 0.2制限により警告のみ"),
-                label(|| "✓ ウィンドウタイトル設定"),
-                label(|| "✓ アプリケーション初期化処理"),
-                label(|| "✓ 基本レイアウト（ヘッダー・メイン・ステータス）"),
-            ))
-            .style(|s| s.gap(5.0)),
-        ))
-        .style(|s| s.items_center().justify_center()),
-    )
-    .style(|s| s.size_full().background(Color::rgb8(250, 250, 250)))
-}
-
-/// ステータスバー部分の作成
-fn create_status_bar() -> impl IntoView {
-    h_stack((
-        label(|| "準備完了").style(|s| s.font_size(12.0).margin_left(10.0)),
-        // スペーサー
-        container("").style(|s| s.flex_grow(1.0)),
-        label(|| format!("rust-explorer v{}", env!("CARGO_PKG_VERSION")))
-            .style(|s| s.font_size(12.0).margin_right(10.0)),
-    ))
-    .style(|s| {
-        s.width_full()
-            .height(25.0)
-            .background(Color::rgb8(230, 230, 230))
-            .border_top(1.0)
-            .border_color(Color::rgb8(200, 200, 200))
-            .items_center()
-    })
-}
+// レイアウトコンポーネントは crate::components モジュールに移動されました
+// create_header() -> components::header::default_header()
+// create_main_content() -> components::main_content::default_main_content()
+// create_status_bar() -> components::status_bar::default_status_bar()
 
 #[cfg(test)]
 mod tests {
