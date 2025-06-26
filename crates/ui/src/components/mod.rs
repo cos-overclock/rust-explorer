@@ -2,6 +2,7 @@
 //!
 //! 再利用可能なUIコンポーネントを含みます。
 
+pub mod error_dialog;
 pub mod header;
 pub mod main_content;
 pub mod status_bar;
@@ -12,6 +13,10 @@ pub mod status_bar;
 // pub mod file_list;
 
 // 公開API
+pub use error_dialog::{
+    ErrorAction, ErrorActionType, ErrorDisplayInfo, ErrorDisplayManager, display_error_globally,
+    error_dialog_component, error_display_area, global_error_manager,
+};
 pub use header::{HeaderConfig, default_header, header_component};
 pub use main_content::{
     ContentType, MainContentConfig, default_main_content, main_content_component,

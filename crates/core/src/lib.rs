@@ -2,6 +2,8 @@
 //!
 //! アプリケーションの中核となるビジネスロジックを含みます。
 
+#![allow(clippy::result_large_err)]
+
 pub mod event;
 pub mod filesystem;
 

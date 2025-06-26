@@ -2,6 +2,8 @@
 //!
 //! ユーザーインターフェース関連のコンポーネントとロジックを含みます。
 
+#![allow(clippy::result_large_err)]
+
 pub mod app;
 pub mod components;
 pub mod layout;

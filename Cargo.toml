@@ -17,3 +17,6 @@ rust-explorer-core = { path = "crates/core" }
 rust-explorer-config = { path = "crates/config" }
 rust-explorer-ui = { path = "crates/ui" }
 rust-explorer-utils = { path = "crates/utils" }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+tracing-appender = "0.2"

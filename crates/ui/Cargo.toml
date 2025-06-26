@@ -9,3 +9,5 @@ floem = "0.2"
 rust-explorer-core = { path = "../core" }
 rust-explorer-config = { path = "../config" }
 rust-explorer-utils = { path = "../utils" }
+chrono = { version = "0.4", features = ["serde"] }
+serde = { version = "1.0", features = ["derive"] }
