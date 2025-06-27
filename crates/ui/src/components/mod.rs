@@ -9,6 +9,9 @@ pub mod file_list;
 pub mod file_navigation;
 pub mod header;
 pub mod main_content;
+pub mod modern_file_item;
+pub mod modern_header;
+pub mod modern_sidebar;
 pub mod sort_filter;
 pub mod status_bar;
 
@@ -37,6 +40,17 @@ pub use file_navigation::{
 pub use header::{HeaderConfig, default_header, header_component};
 pub use main_content::{
     ContentType, MainContentConfig, default_main_content, main_content_component,
+};
+pub use modern_file_item::{
+    FileItemDisplayMode, ModernFileItemConfig, default_modern_file_item, modern_file_item_view,
+    modern_file_item_with_double_click,
+};
+pub use modern_header::{
+    ModernHeader, ModernHeaderConfig, default_modern_header, modern_header_component,
+};
+pub use modern_sidebar::{
+    ModernSidebar, ModernSidebarConfig, SidebarItem, SidebarItemType, SidebarSection,
+    default_modern_sidebar, modern_sidebar_component,
 };
 pub use sort_filter::{
     SortFilterConfig, SortFilterUIManager, filter_toolbar, simple_filter_bar, sort_filter_toolbar,

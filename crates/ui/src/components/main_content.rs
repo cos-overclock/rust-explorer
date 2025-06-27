@@ -12,8 +12,8 @@ use std::path::PathBuf;
 use std::rc::Rc;
 
 use super::{
-    SortFilterUIManager, breadcrumb_view, file_item_with_double_click, navigation_helpers,
-    simple_filter_bar,
+    ModernFileItemConfig, SortFilterUIManager, breadcrumb_view, modern_file_item_with_double_click,
+    navigation_helpers, simple_filter_bar,
 };
 
 /// メインコンテンツコンポーネントの設定
@@ -287,11 +287,16 @@ fn create_file_list_container_with_sort_filter(
                     .unwrap_or(0);
                 let is_selected = selected_indices.get().contains(&index);
 
-                // ダブルクリックハンドラー付きのファイルアイテムを作成
+                // モダンファイルアイテムを作成
                 let nav_manager_clone = nav_manager.clone();
-                file_item_with_double_click(entry, is_selected, move |entry| {
-                    nav_manager_clone.handle_double_click(&entry);
-                })
+                modern_file_item_with_double_click(
+                    entry,
+                    is_selected,
+                    ModernFileItemConfig::default(),
+                    move |entry| {
+                        nav_manager_clone.handle_double_click(&entry);
+                    },
+                )
             },
         ))
         .style(|s| s.flex_col().gap(1)),

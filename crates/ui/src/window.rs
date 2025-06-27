@@ -20,7 +20,9 @@
 //! - floem-winit直接使用による高度な制御
 //! - カスタムウィンドウマネージャーの実装
 
-use crate::components::{default_header, default_main_content, default_status_bar};
+use crate::components::{
+    default_main_content, default_modern_header, default_modern_sidebar, default_status_bar,
+};
 use floem::event::{Event, EventListener};
 use floem::kurbo::Size;
 use floem::prelude::*;
@@ -110,10 +112,16 @@ fn main_window_view(settings: Rc<RefCell<Settings>>) -> impl IntoView {
     let settings_clone = settings.clone();
 
     v_stack((
-        // ヘッダー部分
-        default_header(),
-        // メインコンテンツ部分
-        default_main_content(settings_clone),
+        // モダンヘッダー部分
+        default_modern_header(),
+        // モダンメインコンテンツ部分（サイドバー + コンテンツ）
+        h_stack((
+            // モダンサイドバー
+            default_modern_sidebar(),
+            // メインコンテンツ
+            default_main_content(settings_clone),
+        ))
+        .style(|s| s.flex().height_full()),
         // ステータスバー部分
         default_status_bar(),
     ))
