@@ -81,6 +81,10 @@ pub enum AppError {
     #[error("File system error: {0}")]
     FileSystem(#[from] std::io::Error),
 
+    /// カスタムファイルシステムエラー
+    #[error("File system error: {0}")]
+    FileSystemCustom(String),
+
     /// 設定エラー
     #[error("Configuration error: {0}")]
     Config(String),
@@ -141,6 +145,7 @@ impl AppError {
         match self {
             AppError::OutOfMemory => ErrorSeverity::Fatal,
             AppError::FileSystem(_) => ErrorSeverity::Critical,
+            AppError::FileSystemCustom(_) => ErrorSeverity::Critical,
             AppError::Config(_) | AppError::Json(_) => ErrorSeverity::Critical,
             AppError::AccessDenied(_) => ErrorSeverity::Error,
             AppError::Network(_) | AppError::Timeout(_) => ErrorSeverity::Error,
@@ -154,7 +159,9 @@ impl AppError {
     /// エラーカテゴリを取得
     pub fn category(&self) -> ErrorCategory {
         match self {
-            AppError::FileSystem(_) | AppError::InvalidPath(_) => ErrorCategory::FileSystem,
+            AppError::FileSystem(_) | AppError::FileSystemCustom(_) | AppError::InvalidPath(_) => {
+                ErrorCategory::FileSystem
+            }
             AppError::Config(_) | AppError::Json(_) => ErrorCategory::Configuration,
             AppError::Ui(_) => ErrorCategory::UserInterface,
             AppError::Network(_) => ErrorCategory::Network,
@@ -170,6 +177,7 @@ impl AppError {
     pub fn user_message(&self) -> String {
         match self {
             AppError::FileSystem(_) => "ファイル操作でエラーが発生しました。".to_string(),
+            AppError::FileSystemCustom(msg) => msg.clone(),
             AppError::Config(_) => "設定ファイルに問題があります。".to_string(),
             AppError::Ui(_) => "画面表示でエラーが発生しました。".to_string(),
             AppError::InvalidPath(_) => "指定されたパスが無効です。".to_string(),

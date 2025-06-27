@@ -7,6 +7,7 @@
 pub mod event;
 pub mod filesystem;
 pub mod state;
+pub mod system_integration;
 
 #[cfg(test)]
 mod tests;
@@ -19,3 +20,4 @@ pub use state::{
     AppState, PanePosition, PaneSize, PaneState, PaneType, StateChangeEvent, StateManager,
     TabState, UiState, WindowState, state_utils,
 };
+pub use system_integration::{DefaultSystemIntegration, FileNavigationManager, SystemIntegration};

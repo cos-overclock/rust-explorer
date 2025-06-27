@@ -11,7 +11,7 @@ use std::env;
 use std::path::PathBuf;
 use std::rc::Rc;
 
-use super::{breadcrumb_view, file_list_view};
+use super::{breadcrumb_view, file_item_with_double_click, navigation_helpers};
 
 /// メインコンテンツコンポーネントの設定
 pub struct MainContentConfig {
@@ -150,6 +150,8 @@ fn create_feature_item(title: &'static str, description: &'static str) -> impl I
 /// ファイルエクスプローラーコンテンツの作成
 fn create_file_explorer_content(_settings: Rc<RefCell<Settings>>) -> impl IntoView {
     use floem::reactive::RwSignal;
+    use rust_explorer_core::FileNavigationManager;
+    use std::sync::Arc;
 
     // 現在のディレクトリを取得（フォールバックは/home）
     let current_dir = env::current_dir().unwrap_or_else(|_| {
@@ -160,36 +162,34 @@ fn create_file_explorer_content(_settings: Rc<RefCell<Settings>>) -> impl IntoVi
 
     // リアクティブな現在のパス
     let current_path = RwSignal::new(current_dir.clone());
+    let current_path_for_nav = current_path;
+
+    // ファイルナビゲーションマネージャーを作成
+    let _nav_manager = Arc::new(FileNavigationManager::with_default());
+
+    // UI用のナビゲーションマネージャーを作成
+    let ui_nav_manager = Arc::new(
+        super::FileNavigationManager::with_default(current_dir.clone())
+            .on_path_change(move |new_path| {
+                current_path_for_nav.set(new_path);
+            })
+            .on_error(move |error| {
+                eprintln!("ナビゲーションエラー: {}", error);
+            }),
+    );
+
+    let ui_nav_for_list = ui_nav_manager.clone();
 
     v_stack((
+        // ナビゲーションツールバー
+        navigation_helpers::navigation_toolbar(ui_nav_manager.clone())
+            .style(|s| s.margin_bottom(10.0)),
         // パンくずナビゲーション
         breadcrumb_view(current_path).style(|s| s.margin_bottom(10.0)),
         // ファイルリストエリア
-        create_file_list_container(current_dir),
+        create_file_list_container_with_navigation(current_dir, ui_nav_for_list),
     ))
     .style(|s| s.size_full().gap(5.0))
-}
-
-/// ファイルリストコンテナの作成
-fn create_file_list_container(current_dir: PathBuf) -> impl IntoView {
-    // RwSignal を直接使用してファイルリストを作成
-    use floem::reactive::RwSignal;
-    use rust_explorer_core::FileEntry;
-
-    let entries = RwSignal::new(Vec::<FileEntry>::new());
-    let selected_indices = RwSignal::new(Vec::<usize>::new());
-
-    // 同期的にファイル読み込み（floemアプリケーションではtokioランタイムが利用できないため）
-    let file_entries = load_directory_sync(&current_dir);
-    entries.set(file_entries);
-
-    container(file_list_view(entries, selected_indices)).style(|s| {
-        s.size_full()
-            .border(1.0)
-            .border_color(Color::rgb8(200, 200, 200))
-            .border_radius(8.0)
-            .background(Color::rgb8(255, 255, 255))
-    })
 }
 
 /// 同期的にディレクトリを読み込み
@@ -245,6 +245,52 @@ fn load_directory_sync(path: &PathBuf) -> Vec<rust_explorer_core::FileEntry> {
         }
         Err(_) => Vec::new(),
     }
+}
+
+/// ナビゲーション付きファイルリストコンテナの作成
+fn create_file_list_container_with_navigation(
+    current_dir: PathBuf,
+    nav_manager: std::sync::Arc<super::FileNavigationManager>,
+) -> impl IntoView {
+    use floem::reactive::RwSignal;
+    use floem::views::{Decorators, dyn_stack, scroll};
+    use rust_explorer_core::FileEntry;
+
+    let entries = RwSignal::new(Vec::<FileEntry>::new());
+    let selected_indices = RwSignal::new(Vec::<usize>::new());
+
+    // 初期ファイル読み込み
+    let file_entries = load_directory_sync(&current_dir);
+    entries.set(file_entries);
+
+    container(
+        scroll(dyn_stack(
+            move || entries.get(),
+            |entry| entry.name.clone(),
+            move |entry| {
+                let index = entries
+                    .get()
+                    .iter()
+                    .position(|e| e.name == entry.name)
+                    .unwrap_or(0);
+                let is_selected = selected_indices.get().contains(&index);
+
+                // ダブルクリックハンドラー付きのファイルアイテムを作成
+                let nav_manager_clone = nav_manager.clone();
+                file_item_with_double_click(entry, is_selected, move |entry| {
+                    nav_manager_clone.handle_double_click(&entry);
+                })
+            },
+        ))
+        .style(|s| s.flex_col().gap(1)),
+    )
+    .style(|s| {
+        s.size_full()
+            .border(1.0)
+            .border_color(Color::rgb8(200, 200, 200))
+            .border_radius(8.0)
+            .background(Color::rgb8(255, 255, 255))
+    })
 }
 
 /// エラーコンテンツの作成
