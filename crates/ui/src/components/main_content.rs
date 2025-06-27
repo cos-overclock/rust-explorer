@@ -11,7 +11,10 @@ use std::env;
 use std::path::PathBuf;
 use std::rc::Rc;
 
-use super::{breadcrumb_view, file_item_with_double_click, navigation_helpers};
+use super::{
+    SortFilterUIManager, breadcrumb_view, file_item_with_double_click, navigation_helpers,
+    simple_filter_bar,
+};
 
 /// メインコンテンツコンポーネントの設定
 pub struct MainContentConfig {
@@ -163,6 +166,7 @@ fn create_file_explorer_content(_settings: Rc<RefCell<Settings>>) -> impl IntoVi
     // リアクティブな現在のパス
     let current_path = RwSignal::new(current_dir.clone());
     let current_path_for_nav = current_path;
+    let current_path_for_reload = current_path;
 
     // ファイルナビゲーションマネージャーを作成
     let _nav_manager = Arc::new(FileNavigationManager::with_default());
@@ -178,16 +182,29 @@ fn create_file_explorer_content(_settings: Rc<RefCell<Settings>>) -> impl IntoVi
             }),
     );
 
+    // ソート・フィルタマネージャーを作成
+    let sort_filter_manager = Arc::new(SortFilterUIManager::new().on_filter_change(move || {
+        // フィルタ変更時にファイルリストを再読み込み
+        // 実際の実装では、ここでファイルリストのリロードをトリガーする
+    }));
+
     let ui_nav_for_list = ui_nav_manager.clone();
+    let sort_filter_for_list = sort_filter_manager.clone();
 
     v_stack((
         // ナビゲーションツールバー
         navigation_helpers::navigation_toolbar(ui_nav_manager.clone())
-            .style(|s| s.margin_bottom(10.0)),
+            .style(|s| s.margin_bottom(8.0)),
         // パンくずナビゲーション
-        breadcrumb_view(current_path).style(|s| s.margin_bottom(10.0)),
+        breadcrumb_view(current_path).style(|s| s.margin_bottom(8.0)),
+        // フィルタバー
+        simple_filter_bar(sort_filter_manager.clone()).style(|s| s.margin_bottom(8.0)),
         // ファイルリストエリア
-        create_file_list_container_with_navigation(current_dir, ui_nav_for_list),
+        create_file_list_container_with_sort_filter(
+            current_path_for_reload,
+            ui_nav_for_list,
+            sort_filter_for_list,
+        ),
     ))
     .style(|s| s.size_full().gap(5.0))
 }
@@ -229,17 +246,7 @@ fn load_directory_sync(path: &PathBuf) -> Vec<rust_explorer_core::FileEntry> {
                 file_entries.push(file_entry);
             }
 
-            // フォルダを先にソート
-            file_entries.sort_by(|a, b| {
-                use rust_explorer_core::FileType;
-                match (&a.file_type, &b.file_type) {
-                    (FileType::Directory, FileType::Directory)
-                    | (FileType::File, FileType::File) => a.name.cmp(&b.name),
-                    (FileType::Directory, _) => std::cmp::Ordering::Less,
-                    (_, FileType::Directory) => std::cmp::Ordering::Greater,
-                    _ => a.name.cmp(&b.name),
-                }
-            });
+            // ソートは後でソート・フィルタマネージャーが行うため、ここでは削除
 
             file_entries
         }
@@ -247,21 +254,26 @@ fn load_directory_sync(path: &PathBuf) -> Vec<rust_explorer_core::FileEntry> {
     }
 }
 
-/// ナビゲーション付きファイルリストコンテナの作成
-fn create_file_list_container_with_navigation(
-    current_dir: PathBuf,
+/// ソート・フィルタ機能付きファイルリストコンテナの作成
+fn create_file_list_container_with_sort_filter(
+    current_path: RwSignal<PathBuf>,
     nav_manager: std::sync::Arc<super::FileNavigationManager>,
+    sort_filter_manager: std::sync::Arc<SortFilterUIManager>,
 ) -> impl IntoView {
-    use floem::reactive::RwSignal;
+    use floem::reactive::{RwSignal, create_effect};
     use floem::views::{Decorators, dyn_stack, scroll};
     use rust_explorer_core::FileEntry;
 
     let entries = RwSignal::new(Vec::<FileEntry>::new());
     let selected_indices = RwSignal::new(Vec::<usize>::new());
 
-    // 初期ファイル読み込み
-    let file_entries = load_directory_sync(&current_dir);
-    entries.set(file_entries);
+    // パス変更時にファイルリストを再読み込み
+    create_effect(move |_| {
+        let path = current_path.get();
+        let mut file_entries = load_directory_sync(&path);
+        sort_filter_manager.process_entries(&mut file_entries);
+        entries.set(file_entries);
+    });
 
     container(
         scroll(dyn_stack(
@@ -311,7 +323,6 @@ fn create_error_content(message: String) -> impl IntoView {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use rust_explorer_config::Settings;
 
     #[test]
     fn test_main_content_config_default() {
