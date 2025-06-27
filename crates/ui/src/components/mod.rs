@@ -9,6 +9,7 @@ pub mod file_list;
 pub mod file_navigation;
 pub mod header;
 pub mod main_content;
+pub mod sort_filter;
 pub mod status_bar;
 
 // 将来のコンポーネント用のモジュール宣言
@@ -36,6 +37,10 @@ pub use file_navigation::{
 pub use header::{HeaderConfig, default_header, header_component};
 pub use main_content::{
     ContentType, MainContentConfig, default_main_content, main_content_component,
+};
+pub use sort_filter::{
+    SortFilterConfig, SortFilterUIManager, filter_toolbar, simple_filter_bar, sort_filter_toolbar,
+    sort_toolbar,
 };
 pub use status_bar::{
     StatusBarConfig, StatusInfo, StatusType, add_status_item, create_status_info,
