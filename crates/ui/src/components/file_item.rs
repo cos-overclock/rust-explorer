@@ -134,6 +134,25 @@ pub fn file_item_component(entry: FileEntry, selected: bool) -> impl View {
     file_item_view(entry, selected)
 }
 
+/// ダブルクリック可能なファイルアイテムコンポーネントを作成
+pub fn file_item_with_double_click<F>(
+    entry: FileEntry,
+    selected: bool,
+    on_double_click: F,
+) -> impl View
+where
+    F: Fn(FileEntry) + 'static,
+{
+    let entry_for_click = entry.clone();
+
+    file_item_view(entry, selected).on_event_stop(
+        floem::event::EventListener::DoubleClick,
+        move |_event| {
+            on_double_click(entry_for_click.clone());
+        },
+    )
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -6,6 +6,7 @@ pub mod breadcrumb;
 pub mod error_dialog;
 pub mod file_item;
 pub mod file_list;
+pub mod file_navigation;
 pub mod header;
 pub mod main_content;
 pub mod status_bar;
@@ -23,10 +24,14 @@ pub use error_dialog::{
     ErrorAction, ErrorActionType, ErrorDisplayInfo, ErrorDisplayManager, display_error_globally,
     error_dialog_component, error_display_area, global_error_manager,
 };
-pub use file_item::{file_item_component, file_item_view};
+pub use file_item::{file_item_component, file_item_view, file_item_with_double_click};
 pub use file_list::{
     FileListConfig, FileListState, FileListView, default_file_list_view, file_list_view,
     file_list_view_component,
+};
+pub use file_navigation::{
+    FileNavigationConfig, FileNavigationManager, FileNavigationState, navigation_helpers,
+    with_double_click_handler,
 };
 pub use header::{HeaderConfig, default_header, header_component};
 pub use main_content::{
